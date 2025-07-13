@@ -8,12 +8,12 @@ BPF_PROG_ARRAY(syscall, 300);  // 1
 int hello(struct bpf_raw_tracepoint_args *ctx) {  // 2
     int opcode = ctx->args[1];  // 3
     syscall.call(ctx, opcode);  // 4
-    bpf_trace_printk("Another syscall: %d", opcode);  // 5
+    // bpf_trace_printk("Another syscall: %d", opcode);  // 5
     return 0;
 }
 
 int hello_exec(void *ctx) {  // 6
-    bpf_trace_printk("Executing a program");
+    // bpf_trace_printk("Executing a program");
     return 0;
 }
 
