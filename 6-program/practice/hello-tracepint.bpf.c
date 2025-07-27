@@ -1,78 +1,45 @@
-#include "vmlinux.h"
+#include "../vmlinux.h"
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
 #include <bpf/bpf_core_read.h>
-#include "hello-verifier.h"
+#include "../hello-verifier.h"
 
 int c = 1;
 char message[12] = "Hello World";
 
-struct {
-    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-    __uint(key_size, sizeof(u32));
-    __uint(value_size, sizeof(u32));
+struct
+{
+   __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+   __uint(key_size, sizeof(u32));
+   __uint(value_size, sizeof(u32));
 } output SEC(".maps");
 
-struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __uint(max_entries, 10240);
-    __type(key, u32);
-    __type(value, struct msg_t);
+struct
+{
+   __uint(type, BPF_MAP_TYPE_HASH);
+   __uint(max_entries, 10240);
+   __type(key, u32);
+   __type(value, struct msg_t);
 } my_config SEC(".maps");
 
-SEC("ksyscall/execve")
-int kprobe_exec(void *ctx)
+
+
+struct my_sysenter_execve
 {
-   struct data_t data = {}; 
-   struct msg_t *p;
-   u64 uid;
+   unsigned short common_type;
+   unsigned char common_flags;
+   unsigned char common_preempt_count;
+   int common_pid;
+};
 
-   data.counter = c; 
-   c++; 
 
-   data.pid = bpf_get_current_pid_tgid();
-   uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
-   data.uid = uid;
-
-   p = bpf_map_lookup_elem(&my_config, &uid);
-   // The first argument needs to be a pointer to a map; the following won't be accepted 
-   // p = bpf_map_lookup_elem(&data, &uid);
-
-   // Attempt to dereference a potentially null pointer
-   if (p != 0) {
-      char a = p->message[0];
-      bpf_printk("%d", a);        
-   }
-
-   if (p != 0) {
-      bpf_probe_read_kernel(&data.message, sizeof(data.message), p->message);  
-   } else {
-      bpf_probe_read_kernel(&data.message, sizeof(data.message), message); 
-   }
-
-   // Changing this to <= means and c could have value beyond the bounds of the
-   // global message array
-   // if (c <= sizeof(message)) {
-   if (c < sizeof(message)) {
-      char a = message[c];
-      bpf_printk("%c", a);
-   }
-
-   // Changing this to <= means and c could have value beyond the bounds of the
-   // data.message array
-   // if (c <= sizeof(data.message)) {
-   if (c < sizeof(data.message)) {
-      char a = data.message[c];
-      bpf_printk("%c", a);
-   } 
-
-   bpf_get_current_comm(&data.command, sizeof(data.command));
-   bpf_perf_event_output(ctx, &output, BPF_F_CURRENT_CPU,  &data, sizeof(data));
-
+SEC("tp/syscalls/sys_enter_execve")
+int tp_sys_enter_execve(struct my_sysenter_execve* ctx)
+{
+   bpf_printk("common_type: %d, common_flags: %c, common_preempt_count: %c, common_pid: %d\n",
+      ctx->common_type, ctx->common_flags, ctx->common_preempt_count, ctx->common_pid);
    return 0;
 }
-
-SEC("")
 
 
 

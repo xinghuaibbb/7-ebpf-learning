@@ -2,6 +2,8 @@
     "files.associations": {
         "*.cpp": "cpp",
         "limits": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "libbpf.h": "c",
+        "bpf_core_read.h": "c"
     }
 }

@@ -64,26 +64,26 @@ int BPF_KPROBE(kprobe_do_execveat_common, int fd, struct filename *filename) {
 
 // This should really look at the kernel version, because fentry is supported on
 // ARM from Linux 6.0 onwards
-#ifndef __TARGET_ARCH_arm64
-SEC("fentry/do_execveat_common.isra.0")
-int BPF_PROG(fentry_execve, int fd,  struct filename *filename) {
-   struct data_t data = {}; 
+// #ifndef __TARGET_ARCH_arm64
+// SEC("fentry/do_execveat_common.isra.0")
+// int BPF_PROG(fentry_execve, int fd,  struct filename *filename) {
+//    struct data_t data = {}; 
 
-   bpf_probe_read_kernel(&data.message, sizeof(data.message), fentry_msg); 
+//    bpf_probe_read_kernel(&data.message, sizeof(data.message), fentry_msg); 
 
-   data.pid = bpf_get_current_pid_tgid() >> 32;
-   data.uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
+//    data.pid = bpf_get_current_pid_tgid() >> 32;
+//    data.uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
 
-   bpf_get_current_comm(&data.command, sizeof(data.command));
-   const char *name = BPF_CORE_READ(filename, name);
-   bpf_probe_read_kernel(&data.path, sizeof(data.path), name);
+//    bpf_get_current_comm(&data.command, sizeof(data.command));
+//    const char *name = BPF_CORE_READ(filename, name);
+//    bpf_probe_read_kernel(&data.path, sizeof(data.path), name);
 
-   bpf_printk("%s: filename->name: %s", fentry_msg, name);
+//    bpf_printk("%s: filename->name: %s", fentry_msg, name);
 
-   bpf_perf_event_output(ctx, &output, BPF_F_CURRENT_CPU, &data, sizeof(data));
-   return 0;   
-}
-#endif
+//    bpf_perf_event_output(ctx, &output, BPF_F_CURRENT_CPU, &data, sizeof(data));
+//    return 0;   
+// }
+// #endif
 
 // name: sys_enter_execve
 // ID: 622
